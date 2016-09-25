@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html>
+  	<head>
+	    <meta charset="UTF-8">
+	    <meta name="viewport" content="initial-scale=1, width=device-width, maximum-scale=1, minimum-scale=1, user-scalable=no">
+	    <title>Vis</title>
+	    <link type="text/css" rel="stylesheet" href="css/flats.css" />
+	    <link type="text/css" rel="stylesheet" href="css/materialdesignicons.min.css" />
+  	</head>
+  	<script>
+	window.eval = global.eval = function() {
+		throw new Error("Sorry, eval() is not supported.");
+	}
+  	</script>
+	<body class="large">
+	    <header class="windowframe">
+	    	<span class="icon"><i class="mdi mdi-menu"></i></span>
+	    	<span class="title">Vis</span>
+		    <button class="btn-devtools" title="Open DevTools"><i class="mdi mdi-bug"></i></button>
+		    <button class="btn-min" title="Minimize"><i class="mdi mdi-window-minimize"></i></button>
+		    <button class="btn-max" title="Restore Down"><i class="mdi mdi-window-maximize"></i></button>
+		    <button class="btn-close" title="Close"><i class="mdi mdi-close"></i></button>
+	    </header>
+	    <div class="elements">
+		    <main class="main-player">
+			    <div id="visbox">
+					<canvas id="visCanvas"></canvas>
+				</div>
+			    <section class="small player">
+				    <h1 class="info name" id="audio-name"></h1>
+				    <h2 class="info artist" id="audio-artist"></h2>
+				    <div class="progress">
+				    	<input type="range" class="scrubber" id="scrubber-input" value='0' min='0' step="0.1" />
+				    	<div class="progress-bar"></div>
+				    </div>
+				    <span class="time time-past">0:00</span>
+				    <nav class="controls">
+				    	<!-- <button class="ctrl-btn ctrl-btn-small disabled" id="shuffle"><i class="mdi mdi-shuffle-variant"></i></button> -->
+				    	<div class="ctrl-btn ctrl-btn-small disabled placeholder"><i class="mdi"></i></div>
+				    	<button class="ctrl-btn ctrl-btn-small disabled" id="loop"><i class="mdi mdi-refresh"></i></button>
+				    	<button class="ctrl-btn disabled" id="previous"><i class="mdi mdi-skip-previous"></i></button>
+				    	<button class="ctrl-btn disabled" id="playpause"><i class="mdi mdi-play"></i></button>
+				    	<button class="ctrl-btn disabled" id="next"><i class="mdi mdi-skip-next"></i></button>
+				    	<div class="volume">
+					    	<input type="range" class="ctrl-range" id="volume-input" value='.37' min='0' max="1" step="0.1" />
+					    	<div class="volume-bar"></div>
+				    	</div>
+				    </nav>
+				    <audio id="visSource"></audio>
+			    </section>
+
+			    <section class="medium playlist">
+			    	<h1 class="info title" id="playlist-name"></h1>
+			    	<h2 class="info subtitle" id="playlist-subtitle"><span class="count" id="playlist-count"></span><span class="duration" id="playlist-duration"></span></h2>
+			    	<ul id="playlist-container">
+			    	</ul>
+			    </section>
+			</main>
+
+			<main class="large manager">
+				<section class="page active" id="pl-list">
+					<header class="manager-header"><h1>My playlists</h1><button class="btn btn-fab" title="Create a new playlist" id="btn-new-playlist"><i class="mdi mdi-plus"></i></button></header>
+					<ul class="pl-list" id="playlist-list">
+						<!-- <li class="pl-item">
+							<div class="li-v">
+								<span class="top"><span class="name">Playlist Name</span><span class="count">5 songs</span></span>
+								<span class="bottom desc">Playlist Description</span>
+							</div>
+							<div class="btnbox">
+								<button class="btn edit" id="pl-play" title="Play this playlist"><i class="mdi mdi-play"></i></button><button class="btn edit" id="pl-edit" title="Edit this playlist"><i class="mdi mdi-pencil"></i></button><button class="btn delete" id="pl-delete" title="Remove this playlist"><i class="mdi mdi-delete"></i></button>
+							</div>
+						</li>
+						<li class="pl-item">
+							<div class="li-v">
+								<span class="top"><span class="name">Playlist Name</span><span class="count">15 songs</span></span>
+								<span class="bottom desc">Playlist Description</span>
+							</div>
+							<div class="btnbox">
+								<button class="btn edit" id="pl-play" title="Play this playlist"><i class="mdi mdi-play"></i></button><button class="btn edit" id="pl-edit" title="Edit this playlist"><i class="mdi mdi-pencil"></i></button><button class="btn delete" id="pl-delete" title="Remove this playlist"><i class="mdi mdi-delete"></i></button>
+							</div>
+						</li>
+						<li class="pl-item">
+							<div class="li-v">
+								<span class="top"><span class="name">Playlist Name</span><span class="count">15 songs</span></span>
+								<span class="bottom desc">Playlist Description</span>
+							</div>
+							<div class="btnbox">
+								<button class="btn edit" id="pl-play" title="Play this playlist"><i class="mdi mdi-play"></i></button><button class="btn edit" id="pl-edit" title="Edit this playlist"><i class="mdi mdi-pencil"></i></button><button class="btn delete" id="pl-delete" title="Remove this playlist"><i class="mdi mdi-delete"></i></button>
+							</div>
+						</li> -->
+					</ul>
+				</section>
+				<section class="page drop-target" id="pl-editor" nonce="">
+					<header class="manager-header editor-header"><button class="btn btn-fab btn-back" title="Back to playlists" id="btn-to-pl"><i class="mdi mdi-arrow-left"></i></button><h1 class="h1-v">
+					<input type="text" class="top" placeholder="Playlist Name" title="Playlist Name" id="input-playlist-name" />
+					<input type="text" class="bottom" placeholder="Playlist Description" title="Playlist Description" id="input-playlist-desc" />
+					</h1><button class="btn btn-fab" title="Add music" id="btn-add-music"><i class="mdi mdi-plus-circle-outline"></i></button><button class="btn btn-fab" title="Add folder" id="btn-add-music-multiple"><i class="mdi mdi-plus-circle-multiple-outline"></i></button>
+					</header>
+					<ul class="pl-list" id="song-list">
+						<!-- <li class="pl-item">
+							<div class="li-v">
+								<span class="top"><span class="name">Song Name</span><span class="count">0:00</span></span>
+								<span class="bottom desc"><span class="loc">Location on Disk</span></span>
+							</div>
+							<div class="btnbox">
+								<button class="btn edit" id="song-play" title="Play this song"><i class="mdi mdi-play"></i></button><button class="btn delete" id="song-delete" title="Remove this song"><i class="mdi mdi-delete"></i></button>
+							</div>
+						</li>
+						<li class="pl-item">
+							<div class="li-v">
+								<span class="top"><span class="name">Song Name</span><span class="count">0:00</span></span>
+								<span class="bottom desc"><span class="loc">Location on Disk</span></span>
+							</div>
+							<div class="btnbox">
+								<button class="btn edit" id="song-play" title="Play this song"><i class="mdi mdi-play"></i></button><button class="btn delete" id="song-delete" title="Remove this song"><i class="mdi mdi-delete"></i></button>
+							</div>
+						</li>
+						<li class="pl-item">
+							<div class="li-v">
+								<span class="top"><span class="name">Song Name</span><span class="count">0:00</span></span>
+								<span class="bottom desc"><span class="loc">Location on Disk</span></span>
+							</div>
+							<div class="btnbox">
+								<button class="btn edit" id="song-play" title="Play this song"><i class="mdi mdi-play"></i></button><button class="btn delete" id="song-delete" title="Remove this song"><i class="mdi mdi-delete"></i></button>
+							</div>
+						</li> -->
+					</ul>
+					<footer class="manager-footer editor-footer" id="msg-save">
+					<span class="message">Changes were made to this playlist.</span>
+					<button class="btn" id="btn-cancel-add-files" title="Cancel">Cancel</button><button class="btn" id="btn-confirm-add-files" title="Confirm">Save</button>
+					</footer>
+				</section>
+			</main>
+		</div>
+
+	    <nav class="cornermenu">
+		    <ul>
+			    <li>Display Small</li>
+			    <li>Display Medium</li>
+			    <li>Display Large</li>
+		    </ul>
+	    </nav>
+
+  	</body>
+  	<!-- <script type="text/javascript" src="./js/wavesurfer.min.js"></script> -->
+  	<script>
+    window.$ = window.jQuery = require('./js/jquery-3.0.0.min.js');
+    require('./js/music.js');
+  	</script>
+</html>
