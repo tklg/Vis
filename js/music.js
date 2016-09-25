@@ -9,7 +9,7 @@ const remote = electron.remote;
 const ipc = electron.ipcRenderer;
 const dialog = remote.dialog;
 const nonce = require('nonce')();
-const window = remote.getCurrentWindow();
+const electronWindow = remote.getCurrentWindow();
 
 (function() {
 	var playerProgress = $('.player .progress-bar');
@@ -24,11 +24,16 @@ const window = remote.getCurrentWindow();
 
 	var mm = new MusicManager();
 
-	setTimeout(function(){
+	//setTimeout(function(){
 		//playlist.render();
 		// s, false, playlist
-		track = createVis(null, false, null);
-	}, 500);
+	track = createVis(null, false, null);
+	var rs = _.debounce(function(e) {
+		e.preventDefault();
+		track.updateSize();
+	}, 100);
+	$(window).resize(rs);
+	//}, 500);
 
 	function toTimeString(time) {
 		var h = Math.floor(time / 3600);
@@ -38,20 +43,20 @@ const window = remote.getCurrentWindow();
 		return ((h > 0 ? h + ":" + (m < 10 ? "0" : "") : "") + m + ":" + (s < 10 ? "0" : "") + s);
 	}
 	$(".windowframe .btn-devtools").on("click", function(e) {
-	    window.openDevTools();
+	    electronWindow.openDevTools();
 	});
 	$(".windowframe .btn-min").on("click", function(e) {
-	    window.minimize(); 
+	    electronWindow.minimize(); 
 	});
 	$(".windowframe .btn-max").on("click", function(e) {
-	    if (!window.isMaximized()) {
-	        window.maximize();          
+	    if (!electronWindow.isMaximized()) {
+	        electronWindow.maximize();          
 	    } else {
-	        window.unmaximize();
+	        electronWindow.unmaximize();
 	    }
 	});
 	$(".windowframe .btn-close").on("click", function(e) {
-	    window.close();
+	    electronWindow.close();
 	});
 	$('.windowframe .icon').on('click', function() {
 		$('.cornermenu').toggleClass('active');
@@ -265,7 +270,7 @@ const window = remote.getCurrentWindow();
 		var playlist = p;
 		var vis = new Vis({
 			preferredBarWidth: 10,
-			sources: (src ? [src.src] : []),
+			sources: (src ? [src.src] : null),
 			volume: 0.37,
 			loop: 'all', // 'all', 'single', false
 			autoplay: autoplay || false,
@@ -273,7 +278,7 @@ const window = remote.getCurrentWindow();
 			color: 'rainbow',
 			rainbowOpacity: 0.2,
 			onLoad: function() {
-				console.log("Loaded audio: " + src.src);
+				//console.log("Loaded audio: " + src.src);
 				$('.player').removeClass('loading');
 				$('.ctrl-btn').removeClass('disabled');
 				$('#audio-name').text(src.title)
@@ -382,8 +387,37 @@ const window = remote.getCurrentWindow();
 		var cv = document.querySelector(opts.element);
 
 		var barColors = [];
+		
+		var c = cv.getContext('2d');
 
-		var rs = _.debounce(function(e) {
+		var cInd = 0;
+		var ind = 0;
+		for (var i = 0; i < cv.getAttribute('width'); i += (barWidth + opts.barSpacing)) {
+			c.save();
+			c.fillStyle = barColors[cInd++];
+			c.translate(i, 0);
+			c.fillRect(0, (opts.height - opts.height * Math.random())/* + opts.headerHeight*/, barWidth, opts.height);
+			c.restore();
+			ind += Math.floor(usableLength / numBars);
+		}
+
+					
+		var ctx = new AudioContext();
+		var audio = document.querySelector(opts.sourceElement);
+
+		if (opts.sources) 
+			audio.src = opts.sources[0];
+
+		var audioSrc = ctx.createMediaElementSource(audio);
+		var analyser = ctx.createAnalyser();
+		audioSrc.connect(analyser);
+		analyser.connect(ctx.destination);
+
+		var frequencyData = new Uint8Array(analyser.frequencyBinCount);
+		var usableLength = 250;
+		var consZ = 0;
+		var consZLim = opts.consecutiveZeroesLimit || 50;
+		this.updateSize = function() {
 			console.log('resize');
 			opts.width = cv.parentElement.clientWidth;
 			opts.height = cv.parentElement.clientHeight;
@@ -413,40 +447,8 @@ const window = remote.getCurrentWindow();
 					barColors[i] = opts.color;
 				}
 			}
-		}, 100);
-		$(window).resize(rs);
-			
-		rs();
-		
-		var c = cv.getContext('2d');
-
-		var cInd = 0;
-		var ind = 0;
-		for (var i = 0; i < cv.getAttribute('width'); i += (barWidth + opts.barSpacing)) {
-			c.save();
-			c.fillStyle = barColors[cInd++];
-			c.translate(i, 0);
-			c.fillRect(0, (opts.height - opts.height * Math.random())/* + opts.headerHeight*/, barWidth, opts.height);
-			c.restore();
-			ind += Math.floor(usableLength / numBars);
-		}
-
-					
-		var ctx = new AudioContext();
-		var audio = document.querySelector(opts.sourceElement);
-
-		audio.src = opts.sources[0];
-
-		var audioSrc = ctx.createMediaElementSource(audio);
-		var analyser = ctx.createAnalyser();
-		audioSrc.connect(analyser);
-		analyser.connect(ctx.destination);
-
-		var frequencyData = new Uint8Array(analyser.frequencyBinCount);
-		var usableLength = 250;
-		var consZ = 0;
-		var consZLim = opts.consecutiveZeroesLimit || 50;
-
+		};
+		this.updateSize();
 		function setUsableLength(len) {
 			if (len < usableLength) return;
 			usableLength = len;
@@ -568,7 +570,8 @@ const window = remote.getCurrentWindow();
 
 		// loads instantly, usually
 		setTimeout(function() {
-			opts.onLoad();
+			if (opts.sources)
+				opts.onLoad();
 			if (opts.autoplay) {
 				_this.play();
 			}
