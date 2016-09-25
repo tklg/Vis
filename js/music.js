@@ -505,8 +505,9 @@ const electronWindow = remote.getCurrentWindow();
 			if (newSource) {
 				audio.src = newSource.src;
 				srcItem = newSource;
+				this.seek(0);
+				audio.pause();
 			}
-			this.seek(0);
 			audio.play();
 			opts.onPlay(newSource ? newSource : srcItem);
 			return this;
